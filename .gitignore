@@ -4,3 +4,5 @@ cmake-build-debug
 .idea
 base/cache
 build
+__pycache__/
+*.py[cod]

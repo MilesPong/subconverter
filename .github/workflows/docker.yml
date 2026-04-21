@@ -66,12 +66,16 @@ jobs:
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Verify Docker source wiring
+        run: ./scripts/test_ghcr_uses_local_source.sh
+
       - name: Build and export
         id: build
         uses: docker/build-push-action@v5
         with:
           platforms: ${{ matrix.platform }}
-          context: scripts/
+          context: .
+          file: scripts/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             SHA=${{ steps.vars.outputs.sha_short }}

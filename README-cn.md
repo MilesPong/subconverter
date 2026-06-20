@@ -152,6 +152,8 @@
 
 4.  目标类型为 `auto` 时，会根据请求的 `User-Agent` 自动判断输出的目标类型，匹配规则可参见 [此处](https://github.com/metacubex/subconverter/blob/master/src/handler/interfaces.cpp#L121) （该链接有可能因为代码修改而不能准确指向相应的代码）
 
+5.  支持为 Clash/ClashR 目标读写 [Tailscale 出站](https://wiki.metacubex.one/config/proxies/tailscale/)，客户端需使用 Mihomo v1.19.25 或更新版本；其他目标格式会忽略 Tailscale 节点。
+
 * * *
 
 ## 简易用法

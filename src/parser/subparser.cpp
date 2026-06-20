@@ -327,6 +327,42 @@ void anytlsConstruct(
         node.MinIdleSession = to_int(min_idle_session);
 }
 
+void tailscaleConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &hostname,
+        const std::string &auth_key,
+        const std::string &control_url,
+        const std::string &state_dir,
+        const std::string &ephemeral,
+        tribool udp,
+        const std::string &accept_routes,
+        const std::string &exit_node,
+        const std::string &exit_node_allow_lan_access,
+        const std::string &dialer_proxy,
+        const std::string &interface_name,
+        const std::string &routing_mark,
+        const std::string &ip_version
+) {
+    node.Type = ProxyType::Tailscale;
+    node.Group = group;
+    node.Remark = remarks;
+    node.TailscaleHostname = hostname;
+    node.TailscaleAuthKey = auth_key;
+    node.TailscaleControlURL = control_url;
+    node.TailscaleStateDir = state_dir;
+    node.TailscaleEphemeral = tribool(ephemeral);
+    node.UDP = udp;
+    node.TailscaleAcceptRoutes = tribool(accept_routes);
+    node.TailscaleExitNode = exit_node;
+    node.TailscaleExitNodeAllowLANAccess = tribool(exit_node_allow_lan_access);
+    node.DialerProxy = dialer_proxy;
+    node.TailscaleInterfaceName = interface_name;
+    node.TailscaleRoutingMark = to_int(routing_mark);
+    node.IpVersion = ip_version;
+}
+
 void vlessConstruct(
         Proxy &node,
         const std::string &group,
@@ -1236,7 +1272,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
     {
         Proxy node;
         Node singleproxy = yamlnode[section][i];
-        std::string proxytype, ps, server, port, cipher, group, password, underlying_proxy; //common
+        std::string proxytype, ps, server, port, cipher, group, password, underlying_proxy, dialer_proxy; //common
         std::string type = "none", id, aid = "0", net = "tcp", path, host, edge, tls, sni, mode; //vmess/vless
         std::string plugin, pluginopts, pluginopts_mode, pluginopts_host, pluginopts_mux; //ss
         std::string protocol, protoparam, obfs, obfsparam; //ssr
@@ -1247,6 +1283,9 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
         std::string uuid, heartbeat_interval, disable_sni, reduce_rtt, request_timeout, udp_relay_mode, congestion_controller, max_udp_relay_packet_size, max_open_streams, fast_open;   //TUIC
         std::string idle_session_check_interval, idle_session_timeout, min_idle_session;
         std::string flow, xtls, short_id;
+        std::string tailscale_hostname, tailscale_auth_key, tailscale_control_url, tailscale_state_dir;
+        std::string tailscale_ephemeral, tailscale_accept_routes, tailscale_exit_node;
+        std::string tailscale_exit_node_allow_lan_access, tailscale_interface_name, tailscale_routing_mark;
         // New parameters from mihomo
         std::string ip_version, client_fingerprint, ech_config, certificate, private_key_pem, vless_encryption;
         std::string smux_protocol, ws_early_data_header_name, http_method, trojan_ss_method, trojan_ss_password;
@@ -1260,14 +1299,10 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
         singleproxy["server"] >>= server;
         singleproxy["port"] >>= port;
 
-        underlying_proxy.clear();
-        // Use 'dialer-proxy' or 'underlying-proxy' to set underlying proxy
-        if (singleproxy["dialer-proxy"].IsDefined())
-            singleproxy["dialer-proxy"] >>= underlying_proxy;
-        else if (singleproxy["underlying-proxy"].IsDefined())
-            singleproxy["underlying-proxy"] >>= underlying_proxy;
+        singleproxy["dialer-proxy"] >>= dialer_proxy;
+        singleproxy["underlying-proxy"] >>= underlying_proxy;
 
-        if(port.empty() || port == "0")
+        if(proxytype != "tailscale" && (port.empty() || port == "0"))
             continue;
         udp = safe_as<std::string>(singleproxy["udp"]);
         tfo = safe_as<std::string>(singleproxy["fast-open"]);
@@ -1286,6 +1321,24 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
 
         switch(hash_(proxytype))
         {
+        case "tailscale"_hash:
+            group = TAILSCALE_DEFAULT_GROUP;
+            singleproxy["hostname"] >>= tailscale_hostname;
+            singleproxy["auth-key"] >>= tailscale_auth_key;
+            singleproxy["control-url"] >>= tailscale_control_url;
+            singleproxy["state-dir"] >>= tailscale_state_dir;
+            tailscale_ephemeral = safe_as<std::string>(singleproxy["ephemeral"]);
+            tailscale_accept_routes = safe_as<std::string>(singleproxy["accept-routes"]);
+            singleproxy["exit-node"] >>= tailscale_exit_node;
+            tailscale_exit_node_allow_lan_access = safe_as<std::string>(singleproxy["exit-node-allow-lan-access"]);
+            singleproxy["interface-name"] >>= tailscale_interface_name;
+            singleproxy["routing-mark"] >>= tailscale_routing_mark;
+            tailscaleConstruct(node, group, ps, tailscale_hostname, tailscale_auth_key,
+                               tailscale_control_url, tailscale_state_dir, tailscale_ephemeral,
+                               udp, tailscale_accept_routes, tailscale_exit_node,
+                               tailscale_exit_node_allow_lan_access, dialer_proxy,
+                               tailscale_interface_name, tailscale_routing_mark, ip_version);
+            break;
         case "vmess"_hash:
             group = V2RAY_DEFAULT_GROUP;
 
@@ -1805,6 +1858,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
             continue;
         }
 
+        node.DialerProxy = dialer_proxy;
         node.Id = index;
         nodes.emplace_back(std::move(node));
         index++;

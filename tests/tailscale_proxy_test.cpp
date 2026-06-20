@@ -103,5 +103,14 @@ proxies:
     require(explodeConfContent(missing_port, invalid_nodes) == 0, "non-Tailscale nodes should still require a port");
     require(invalid_nodes.empty(), "invalid non-Tailscale node should be skipped");
 
+    std::vector<RulesetContent> rulesets;
+    extra_settings surge_ext;
+    const std::string surge_base = "[General]\n[Proxy]\n[Proxy Group]\n[Rule]\n";
+    const std::string surge_output = proxyToSurge(nodes, surge_base, rulesets, groups, 4, surge_ext);
+    require(surge_output.find("tskey-auth-fixture") == std::string::npos,
+            "unsupported targets must not leak Tailscale authentication data");
+    require(surge_output.find("tailscale-test") == std::string::npos,
+            "unsupported targets must omit Tailscale nodes and dialer references");
+
     return 0;
 }

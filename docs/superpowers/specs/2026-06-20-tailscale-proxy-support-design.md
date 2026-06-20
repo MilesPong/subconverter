@@ -36,7 +36,7 @@ Add `ProxyType::Tailscale`, return `Tailscale` from `getProxyTypeName`, and defi
 
 Add dedicated Tailscale properties to `Proxy` for hostname, authentication key, control URL, state directory, ephemeral mode, accepted routes, exit node, exit-node LAN access, interface name, and routing mark. Reuse the existing `UDP` and `IpVersion` properties where their semantics match Mihomo.
 
-Add a distinct `DialerProxy` property for Mihomo's `dialer-proxy`. Do not overload `UnderlyingProxy`: that property models Surge's `underlying-proxy`, which is a separate output concept. Clash parsing and export will preserve `dialer-proxy` for Tailscale and conventional node types, enabling configurations such as a SOCKS5 node whose dialer is a Tailscale outbound.
+Add a distinct `DialerProxy` property for Mihomo's `dialer-proxy`. Do not overload `UnderlyingProxy`: that property originates from Surge's `underlying-proxy`, which is a separate input concept. Clash parsing and export will preserve `dialer-proxy` for Tailscale and conventional node types, enabling configurations such as a SOCKS5 node whose dialer is a Tailscale outbound. For backward compatibility, Clash export will continue to use `UnderlyingProxy` as a fallback when the new `DialerProxy` property is empty.
 
 ## Parsing flow
 
@@ -48,9 +48,9 @@ Malformed or unknown proxy types continue to be skipped according to current beh
 
 ## Clash and ClashR export
 
-`proxyToClash` will add a Tailscale switch branch that emits `type: tailscale` plus each populated or explicitly configured field. It will not add `server` or `port` for this type.
+`proxyToClash` currently initializes `server` and `port` before dispatching on proxy type. The new Tailscale branch will remove those two keys, then emit `type: tailscale` plus each populated or explicitly configured field.
 
-After emitting a supported Clash node, the exporter will write `dialer-proxy` when `Proxy::DialerProxy` is nonempty. This applies to existing proxy types as well as Tailscale. Existing `underlying-proxy` behavior for non-Clash targets remains unchanged.
+After emitting a supported Clash node, the exporter will write `dialer-proxy` from `Proxy::DialerProxy` when nonempty, otherwise it will retain the existing `Proxy::UnderlyingProxy` fallback. This applies to existing proxy types as well as Tailscale. Existing `underlying-proxy` behavior for non-Clash targets remains unchanged.
 
 The matcher type map will include `TAILSCALE` so existing rename, filter, and group matching mechanisms can identify Tailscale nodes consistently.
 

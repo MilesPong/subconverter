@@ -127,6 +127,25 @@ void anytlsConstruct(
         const std::string &underlying_proxy = ""
 );
 
+void tailscaleConstruct(
+        Proxy &node,
+        const std::string &group,
+        const std::string &remarks,
+        const std::string &hostname,
+        const std::string &auth_key,
+        const std::string &control_url,
+        const std::string &state_dir,
+        const std::string &ephemeral,
+        tribool udp,
+        const std::string &accept_routes,
+        const std::string &exit_node,
+        const std::string &exit_node_allow_lan_access,
+        const std::string &dialer_proxy,
+        const std::string &interface_name,
+        const std::string &routing_mark,
+        const std::string &ip_version
+);
+
 void vlessConstruct(
         Proxy &node,
         const std::string &group,

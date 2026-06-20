@@ -25,7 +25,8 @@ enum class ProxyType
     Hysteria,
     Hysteria2,
     TUIC,
-    AnyTLS
+    AnyTLS,
+    Tailscale
 };
 
 inline String getProxyTypeName(ProxyType type)
@@ -60,6 +61,8 @@ inline String getProxyTypeName(ProxyType type)
         return "TUIC";
     case ProxyType::AnyTLS:
         return "AnyTLS";
+    case ProxyType::Tailscale:
+        return "Tailscale";
     default:
         return "Unknown";
     }
@@ -110,6 +113,7 @@ struct Proxy
     uint32_t UdpOverTcpVersion = 0;
 
     String UnderlyingProxy;
+    String DialerProxy;
 
     uint16_t SnellVersion = 0;
     String ServerName;
@@ -181,6 +185,18 @@ struct Proxy
     // New parameters from mihomo
     String IpVersion;                    // ip-version: ipv4/ipv6/dual/ipv4-prefer/ipv6-prefer
     String ClientFingerprint;            // client-fingerprint: chrome/firefox/safari/ios/random/none
+
+    // Tailscale outbound options
+    String TailscaleHostname;
+    String TailscaleAuthKey;
+    String TailscaleControlURL;
+    String TailscaleStateDir;
+    tribool TailscaleEphemeral;
+    tribool TailscaleAcceptRoutes;
+    String TailscaleExitNode;
+    tribool TailscaleExitNodeAllowLANAccess;
+    String TailscaleInterfaceName;
+    uint32_t TailscaleRoutingMark = 0;
     
     // ECH (Encrypted Client Hello) options
     tribool EchEnable;
@@ -235,5 +251,6 @@ struct Proxy
 #define HYSTERIA2_DEFAULT_GROUP "Hysteria2Provider"
 #define TUIC_DEFAULT_GROUP "TUICProvider"
 #define ANYTLS_DEFAULT_GROUP "AnyTLSProvider"
+#define TAILSCALE_DEFAULT_GROUP "TailscaleProvider"
 
 #endif // PROXY_H_INCLUDED

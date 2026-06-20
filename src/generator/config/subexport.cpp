@@ -128,8 +128,9 @@ bool applyMatcher(const std::string &rule, std::string &real_rule, const Proxy &
         {ProxyType::WireGuard,    "WIREGUARD"},
         {ProxyType::Hysteria,     "HYSTERIA"},
         {ProxyType::Hysteria2,    "HYSTERIA2"},
-        {ProxyType::TUIC,    "TUIC"},
-        {ProxyType::AnyTLS,    "ANYTLS"}
+        {ProxyType::TUIC,      "TUIC"},
+        {ProxyType::AnyTLS,    "ANYTLS"},
+        {ProxyType::Tailscale, "TAILSCALE"}
     };
     if(startsWith(rule, "!!GROUP="))
     {
@@ -281,9 +282,6 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
         singleproxy["name"] = x.Remark;
         singleproxy["server"] = x.Hostname;
         singleproxy["port"] = x.Port;
-
-        if (!x.UnderlyingProxy.empty())
-            singleproxy["dialer-proxy"] = x.UnderlyingProxy;
 
         switch(x.Type)
         {
@@ -614,6 +612,33 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
             if (!scv.is_undef())
                 singleproxy["skip-cert-verify"] = scv.get();
             break;
+        case ProxyType::Tailscale:
+            singleproxy.remove("server");
+            singleproxy.remove("port");
+            singleproxy["type"] = "tailscale";
+            if(!x.TailscaleHostname.empty())
+                singleproxy["hostname"] = x.TailscaleHostname;
+            if(!x.TailscaleAuthKey.empty())
+                singleproxy["auth-key"] = x.TailscaleAuthKey;
+            if(!x.TailscaleControlURL.empty())
+                singleproxy["control-url"] = x.TailscaleControlURL;
+            if(!x.TailscaleStateDir.empty())
+                singleproxy["state-dir"] = x.TailscaleStateDir;
+            if(!x.TailscaleEphemeral.is_undef())
+                singleproxy["ephemeral"] = x.TailscaleEphemeral.get();
+            if(!x.TailscaleAcceptRoutes.is_undef())
+                singleproxy["accept-routes"] = x.TailscaleAcceptRoutes.get();
+            if(!x.TailscaleExitNode.empty())
+                singleproxy["exit-node"] = x.TailscaleExitNode;
+            if(!x.TailscaleExitNodeAllowLANAccess.is_undef())
+                singleproxy["exit-node-allow-lan-access"] = x.TailscaleExitNodeAllowLANAccess.get();
+            if(!x.TailscaleInterfaceName.empty())
+                singleproxy["interface-name"] = x.TailscaleInterfaceName;
+            if(x.TailscaleRoutingMark != 0)
+                singleproxy["routing-mark"] = x.TailscaleRoutingMark;
+            if(!x.IpVersion.empty())
+                singleproxy["ip-version"] = x.IpVersion;
+            break;
         case ProxyType::VLESS:
             singleproxy["type"] = "vless";
             singleproxy["tls"] = true;
@@ -714,6 +739,11 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
         default:
             continue;
         }
+
+        if(!x.DialerProxy.empty())
+            singleproxy["dialer-proxy"] = x.DialerProxy;
+        else if(!x.UnderlyingProxy.empty())
+            singleproxy["dialer-proxy"] = x.UnderlyingProxy;
 
         // UDP is not supported yet in clash using snell
         // sees in https://dreamacro.github.io/clash/configuration/outbound.html#snell

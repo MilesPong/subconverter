@@ -49,6 +49,8 @@ Notice:
 
    - https://t.me/http?server=1.2.3.4&port=233&user=user&pass=pass&remark=Example
 
+3. Tailscale outbound input and output is supported for Clash/ClashR targets and requires Mihomo v1.19.25 or newer. Unsupported target formats omit Tailscale nodes.
+
 
 ---
 

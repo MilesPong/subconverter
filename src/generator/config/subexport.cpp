@@ -725,10 +725,10 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
             if (!x.PublicKey.empty() && !x.ShortID.empty()) {
                 singleproxy["reality-opts"]["public-key"] = x.PublicKey;
                 singleproxy["reality-opts"]["short-id"] = x.ShortID;
+                singleproxy["reality-opts"]["support-x25519mlkem768"] =
+                    x.RealitySupportX25519MlKem768.is_undef() ? true : x.RealitySupportX25519MlKem768.get();
                 if (!x.ClientFingerprint.empty()) {
                     singleproxy["client-fingerprint"] = x.ClientFingerprint;
-                } else if (!x.Fingerprint.empty()) {
-                    singleproxy["client-fingerprint"] = x.Fingerprint;
                 } else {
                     singleproxy["client-fingerprint"] = "random";
                 }

@@ -164,6 +164,17 @@ IF(BUILD_TESTING)
         ${BUILD_TARGET_NAME}
         ${YAML_CPP_LIBRARY})
     ADD_TEST(NAME tailscale_proxy_roundtrip COMMAND tailscale_proxy_test)
+
+    ADD_EXECUTABLE(vless_reality_test tests/vless_reality_test.cpp)
+    TARGET_COMPILE_DEFINITIONS(vless_reality_test PRIVATE -DNO_JS_RUNTIME -DNO_WEBGET)
+    TARGET_INCLUDE_DIRECTORIES(vless_reality_test PRIVATE
+        src
+        ${RAPIDJSON_INCLUDE_DIRS}
+        ${YAML_CPP_INCLUDE_DIRS})
+    TARGET_LINK_LIBRARIES(vless_reality_test PRIVATE
+        ${BUILD_TARGET_NAME}
+        ${YAML_CPP_LIBRARY})
+    ADD_TEST(NAME vless_reality_roundtrip COMMAND vless_reality_test)
 ENDIF()
 
 IF(WIN32)

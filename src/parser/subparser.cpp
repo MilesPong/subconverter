@@ -405,6 +405,16 @@ void vlessConstruct(
             if (!path.empty())
                 node.QUICSecret = trim(path);
             break;
+        case "xhttp"_hash:
+        case "splithttp"_hash:
+            node.TransferProtocol = "xhttp";
+            if (!host.empty())
+                node.Host = trim(host);
+            if (!path.empty())
+                node.Path = urlDecode(trim(path));
+            if (!mode.empty())
+                node.XhttpMode = trim(mode);
+            break;
         default:
             if (!host.empty())
                 node.Host = trim(host);
@@ -1455,6 +1465,19 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
                     singleproxy["quic-opts"]["security"] >>= host;
                     singleproxy["quic-opts"]["key"] >>= path;
                     break;
+                case "xhttp"_hash:
+                case "splithttp"_hash:
+                    net = "xhttp";
+                    if (singleproxy["xhttp-opts"].IsDefined())
+                    {
+                        if (singleproxy["xhttp-opts"]["path"].IsDefined())
+                            path = safe_as<std::string>(singleproxy["xhttp-opts"]["path"]);
+                        if (singleproxy["xhttp-opts"]["host"].IsDefined())
+                            singleproxy["xhttp-opts"]["host"] >>= host;
+                        if (singleproxy["xhttp-opts"]["mode"].IsDefined())
+                            singleproxy["xhttp-opts"]["mode"] >>= mode;
+                    }
+                    break;
                 default:
                     singleproxy["host"] >>= host;
                     singleproxy["path"] >>= path;
@@ -1497,6 +1520,21 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes)
                 v2ray_http_upgrade_fast_open = safe_as<std::string>(singleproxy["v2ray-http-upgrade-fast-open"]);
                 node.V2rayHttpUpgrade = v2ray_http_upgrade;
                 node.V2rayHttpUpgradeFastOpen = v2ray_http_upgrade_fast_open;
+            }
+            if(net == "xhttp" || net == "splithttp")
+            {
+                if(singleproxy["xhttp-opts"].IsDefined())
+                {
+                    std::string x_padding_bytes;
+                    singleproxy["xhttp-opts"]["x-padding-bytes"] >>= x_padding_bytes;
+                    node.XhttpPaddingBytes = x_padding_bytes;
+                    if(node.XhttpMode.empty() && singleproxy["xhttp-opts"]["mode"].IsDefined())
+                    {
+                        std::string x_mode;
+                        singleproxy["xhttp-opts"]["mode"] >>= x_mode;
+                        node.XhttpMode = x_mode;
+                    }
+                }
             }
             break;
             }
@@ -2272,6 +2310,15 @@ void explodeStdVLESS(std::string vless, Proxy &node) {
                 host = getUrlArg(addition, strFind(addition,"sni") ? "sni" : "quicSecurity");
                 path = getUrlArg(addition, "key");
                 break;
+            case "xhttp"_hash:
+            case "splithttp"_hash:
+                net = "xhttp";
+                host = getUrlArg(addition, "host");
+                if (host.empty())
+                    host = getUrlArg(addition, "sni");
+                path = getUrlArg(addition, "path");
+                mode = getUrlArg(addition, "mode");
+                break;
             default:
                 return;
         }
@@ -2287,6 +2334,31 @@ void explodeStdVLESS(std::string vless, Proxy &node) {
         remarks = add + ":" + port;
     node.TLSSecure = security == "tls" || security == "reality";
     vlessConstruct(node, VLESS_DEFAULT_GROUP, remarks, add, port, uuid, sni, alpn, type, net, mode, host, path, fingerprint, flow, xtls, public_key, short_id, client_fingerprint, tribool(), tfo, scv, "");
+
+    std::string packet_encoding = getUrlArg(addition, "packetEncoding");
+    if (packet_encoding.empty())
+        packet_encoding = getUrlArg(addition, "packet-encoding");
+    if (packet_encoding.empty())
+        packet_encoding = getUrlArg(addition, "packet_encoding");
+    if (!packet_encoding.empty())
+        node.PacketEncoding = packet_encoding;
+
+    std::string x_padding_bytes = getUrlArg(addition, "x_padding_bytes");
+    if (x_padding_bytes.empty())
+        x_padding_bytes = getUrlArg(addition, "x-padding-bytes");
+
+    std::string extra_str = urlDecode(getUrlArg(addition, "extra"));
+    if (!extra_str.empty()) {
+        Document extra_doc;
+        if (!extra_doc.Parse(extra_str.c_str()).HasParseError() && extra_doc.IsObject()) {
+            if (node.XhttpMode.empty() && extra_doc.HasMember("mode") && extra_doc["mode"].IsString())
+                node.XhttpMode = extra_doc["mode"].GetString();
+            if (x_padding_bytes.empty() && extra_doc.HasMember("xPaddingBytes") && extra_doc["xPaddingBytes"].IsString())
+                x_padding_bytes = extra_doc["xPaddingBytes"].GetString();
+        }
+    }
+    if (!x_padding_bytes.empty())
+        node.XhttpPaddingBytes = x_padding_bytes;
 }
 
 void explodeVLESS(std::string vless, Proxy &node) {

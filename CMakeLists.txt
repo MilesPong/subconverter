@@ -175,6 +175,17 @@ IF(BUILD_TESTING)
         ${BUILD_TARGET_NAME}
         ${YAML_CPP_LIBRARY})
     ADD_TEST(NAME vless_reality_roundtrip COMMAND vless_reality_test)
+
+    ADD_EXECUTABLE(vless_xhttp_test tests/vless_xhttp_test.cpp)
+    TARGET_COMPILE_DEFINITIONS(vless_xhttp_test PRIVATE -DNO_JS_RUNTIME -DNO_WEBGET)
+    TARGET_INCLUDE_DIRECTORIES(vless_xhttp_test PRIVATE
+        src
+        ${RAPIDJSON_INCLUDE_DIRS}
+        ${YAML_CPP_INCLUDE_DIRS})
+    TARGET_LINK_LIBRARIES(vless_xhttp_test PRIVATE
+        ${BUILD_TARGET_NAME}
+        ${YAML_CPP_LIBRARY})
+    ADD_TEST(NAME vless_xhttp_roundtrip COMMAND vless_xhttp_test)
 ENDIF()
 
 IF(WIN32)

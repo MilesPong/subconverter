@@ -237,6 +237,10 @@ struct Proxy
     String TrojanSsMethod;
     String TrojanSsPassword;
 
+    // XHTTP options
+    String XhttpMode;                    // mode: auto / stream-one / stream-up / packet-up
+    String XhttpPaddingBytes;            // x-padding-bytes: e.g. "100-1000"
+
 };
 
 #define SS_DEFAULT_GROUP "SSProvider"

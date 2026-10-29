@@ -367,6 +367,18 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                 singleproxy["servername"] = x.Host;
                 singleproxy["grpc-opts"]["grpc-service-name"] = x.Path;
                 break;
+            case "xhttp"_hash:
+            case "splithttp"_hash:
+                singleproxy["network"] = "xhttp";
+                if(!x.Path.empty())
+                    singleproxy["xhttp-opts"]["path"] = x.Path;
+                if(!x.Host.empty())
+                    singleproxy["xhttp-opts"]["host"] = x.Host;
+                if(!x.XhttpMode.empty())
+                    singleproxy["xhttp-opts"]["mode"] = x.XhttpMode;
+                if(!x.XhttpPaddingBytes.empty())
+                    singleproxy["xhttp-opts"]["x-padding-bytes"] = x.XhttpPaddingBytes;
+                break;
             default:
                 continue;
             }
@@ -707,6 +719,18 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                     singleproxy["grpc-opts"]["grpc-mode"] = x.GRPCMode;
                     singleproxy["grpc-opts"]["grpc-service-name"] = x.GRPCServiceName;
                     break;
+                case "xhttp"_hash:
+                case "splithttp"_hash:
+                    singleproxy["network"] = "xhttp";
+                    if(!x.Path.empty())
+                        singleproxy["xhttp-opts"]["path"] = x.Path;
+                    if(!x.Host.empty())
+                        singleproxy["xhttp-opts"]["host"] = x.Host;
+                    if(!x.XhttpMode.empty())
+                        singleproxy["xhttp-opts"]["mode"] = x.XhttpMode;
+                    if(!x.XhttpPaddingBytes.empty())
+                        singleproxy["xhttp-opts"]["x-padding-bytes"] = x.XhttpPaddingBytes;
+                    break;
                 default:
                     break;
             }
@@ -732,6 +756,8 @@ void proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGr
                 } else {
                     singleproxy["client-fingerprint"] = "random";
                 }
+            } else if (!x.ClientFingerprint.empty()) {
+                singleproxy["client-fingerprint"] = x.ClientFingerprint;
             }
             if (!scv.is_undef())
                 singleproxy["skip-cert-verify"] = scv.get();
